@@ -3,6 +3,7 @@ from django.templatetags.static import static
 
 
 from .models import Product
+import json
 
 
 def banners_list_api(request):
@@ -58,5 +59,12 @@ def product_list_api(request):
 
 
 def register_order(request):
-    # TODO это лишь заглушка
-    return JsonResponse({})
+    try:
+        data = json.loads(request.body.decode())
+    except ValueError:
+        return JsonResponse({})
+
+    print('~~~~~~~')
+    print('~~~~~~~')
+    print('~~~~~~~')
+    print(data)
