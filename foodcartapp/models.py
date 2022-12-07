@@ -145,3 +145,27 @@ class Order(models.Model):
                f'Заказчик: {self.firstname.capitalize()} {self.lastname.capitalize()}' \
                f'Телефон: {self.phonenumber}' \
                f'Адрес для доставки: {self.address}'
+
+
+class OrderItem(models.Model):
+    product = models.ForeignKey(
+        Product,
+        related_name='order_item',
+        verbose_name='продукт',
+        on_delete=models.SET_NULL,
+        null=True
+    )
+    order = models.ForeignKey(
+        Order,
+        related_name='products',
+        verbose_name='заказ',
+        on_delete=models.CASCADE
+    )
+    quantity = models.PositiveSmallIntegerField('количество', default=1)
+
+    def __str__(self):
+        return self.product.name
+
+    class Meta:
+        verbose_name = 'продукт'
+        verbose_name_plural = 'продукты'
