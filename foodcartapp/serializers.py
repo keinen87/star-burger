@@ -10,6 +10,7 @@ class ProductsSerializer(serializers.ModelSerializer):
 
 class OrderSerializer(serializers.ModelSerializer):
     products = ProductsSerializer(many=True, allow_empty=False, write_only=True)
+    total_price = serializers.IntegerField()
 
     class Meta:
         model = Order

@@ -124,12 +124,23 @@ class RestaurantMenuItem(models.Model):
         return f"{self.restaurant.name} - {self.product.name}"
 
 
+class OrderQuerySet(models.QuerySet):
+    def with_price(self):
+        return self.annotate(
+            total_price=models.Sum(
+                models.F('products__product__price') * models.F('products__quantity')
+            )
+        )
+
+
 class Order(models.Model):
     firstname = models.CharField('имя', max_length=100)
     lastname = models.CharField('фамилия', max_length=100)
     phonenumber = PhoneNumberField('номер телефона')
     address = models.CharField('адрес для доставки', max_length=255)
     created_at = models.DateTimeField('дата и время заказа', auto_now_add=True)
+
+    orders = OrderQuerySet.as_manager()
 
     class Meta:
         verbose_name = 'заказ'
