@@ -77,10 +77,12 @@ def register_order(request):
 
     products_fields = serializer.validated_data['products']
     for product_fields in products_fields:
+        product = product_fields['product']
         OrderItem.objects.create(
-            product=product_fields['product'],
+            product=product,
             order=order,
             quantity=product_fields['quantity'],
+            product_price=product.price
         )
 
     return Response(serializer.data)

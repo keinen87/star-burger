@@ -1,9 +1,10 @@
 from django.contrib import admin
+from django.db.models import Count
 from django.shortcuts import reverse
 from django.templatetags.static import static
 from django.utils.html import format_html
 
-from .models import Order, Product
+from .models import Order, OrderItem, Product
 from .models import ProductCategory
 from .models import Restaurant
 from .models import RestaurantMenuItem
@@ -106,6 +107,11 @@ class ProductAdmin(admin.ModelAdmin):
     pass
 
 
+class OrderItemInline(admin.TabularInline):
+    model = OrderItem
+
+
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    pass
+    inlines = [OrderItemInline]
+    fields = ['total_price']

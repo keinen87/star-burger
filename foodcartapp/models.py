@@ -127,20 +127,21 @@ class RestaurantMenuItem(models.Model):
 class OrderQuerySet(models.QuerySet):
     def with_price(self):
         return self.annotate(
-            total_price=models.Sum(
-                models.F('products__product__price') * models.F('products__quantity')
+            price=models.Sum(
+                models.F('products__product_price') * models.F('products__quantity')
             )
         )
 
 
 class Order(models.Model):
+    objects = models.Manager()
+    orders = OrderQuerySet.as_manager()
+
     firstname = models.CharField('имя', max_length=100)
     lastname = models.CharField('фамилия', max_length=100)
     phonenumber = PhoneNumberField('номер телефона')
     address = models.CharField('адрес для доставки', max_length=255)
     created_at = models.DateTimeField('дата и время заказа', auto_now_add=True)
-
-    orders = OrderQuerySet.as_manager()
 
     class Meta:
         verbose_name = 'заказ'
@@ -152,16 +153,13 @@ class Order(models.Model):
         ]
 
     def __str__(self):
-        return f'Заказ от {self.created_at}.' \
-               f'Заказчик: {self.firstname.capitalize()} {self.lastname.capitalize()}' \
-               f'Телефон: {self.phonenumber}' \
-               f'Адрес для доставки: {self.address}'
+        return f'Заказ {self.id}'
 
 
 class OrderItem(models.Model):
     product = models.ForeignKey(
         Product,
-        related_name='order_item',
+        related_name='order_items',
         verbose_name='продукт',
         on_delete=models.SET_NULL,
         null=True
@@ -171,6 +169,13 @@ class OrderItem(models.Model):
         related_name='products',
         verbose_name='заказ',
         on_delete=models.CASCADE
+    )
+    product_price = models.DecimalField(
+        'Цена товара',
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(0)],
+        null=True
     )
     quantity = models.PositiveSmallIntegerField('количество', default=1)
 
