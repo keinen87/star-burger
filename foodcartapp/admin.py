@@ -1,13 +1,15 @@
 from django.contrib import admin
-from django.db.models import Count
+from django.http import HttpResponseRedirect
 from django.shortcuts import reverse
 from django.templatetags.static import static
 from django.utils.html import format_html
+from django.utils.http import url_has_allowed_host_and_scheme
 
 from .models import Order, OrderItem, Product
 from .models import ProductCategory
 from .models import Restaurant
 from .models import RestaurantMenuItem
+from star_burger.settings import ALLOWED_HOSTS
 
 
 class RestaurantMenuItemInline(admin.TabularInline):
@@ -125,3 +127,16 @@ class OrderAdmin(admin.ModelAdmin):
     @admin.display(description='Сумма')
     def price(self, obj):
         return obj.price
+
+    def response_change(self, request, obj):
+        res = super().response_post_save_change(request, obj)
+
+        if 'next' not in request.GET:
+            return res
+
+        redirect_url = request.GET['next']
+
+        if url_has_allowed_host_and_scheme(redirect_url, ALLOWED_HOSTS):
+            return HttpResponseRedirect(redirect_url)
+        else:
+            return res
