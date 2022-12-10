@@ -118,7 +118,19 @@ class OrderItemInline(admin.TabularInline):
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
     inlines = [OrderItemInline]
-    readonly_fields = ['price']
+    fields = [
+        'firstname',
+        'lastname',
+        'phonenumber',
+        'address',
+        'created_at',
+        'called_at',
+        'delivered_at',
+        'status',
+        'price',
+        'comment',
+    ]
+    readonly_fields = ['price', 'created_at']
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)

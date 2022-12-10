@@ -147,7 +147,9 @@ class Order(models.Model):
     lastname = models.CharField('фамилия', max_length=100)
     phonenumber = PhoneNumberField('номер телефона')
     address = models.CharField('адрес для доставки', max_length=255)
-    created_at = models.DateTimeField('дата и время заказа', auto_now_add=True)
+    created_at = models.DateTimeField('время заказа', auto_now_add=True, db_index=True)
+    called_at = models.DateTimeField('время звонка', blank=True, null=True, db_index=True)
+    delivered_at = models.DateTimeField('время доставки', blank=True, null=True, db_index=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PROCESS', db_index=True)
     comment = models.TextField('Комментарий', blank=True)
 
