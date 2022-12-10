@@ -109,9 +109,19 @@ class ProductAdmin(admin.ModelAdmin):
 
 class OrderItemInline(admin.TabularInline):
     model = OrderItem
+    fields = ['product', 'quantity', 'product_price']
+    extra = 0
 
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
     inlines = [OrderItemInline]
-    fields = ['total_price']
+    readonly_fields = ['price']
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.with_price()
+
+    @admin.display(description='Сумма')
+    def price(self, obj):
+        return obj.price

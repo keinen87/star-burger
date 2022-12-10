@@ -1,6 +1,7 @@
 from django.db import models
 from django.core.validators import MinValueValidator
 from phonenumber_field.modelfields import PhoneNumberField
+from django.contrib import admin
 
 
 class Restaurant(models.Model):
@@ -134,8 +135,7 @@ class OrderQuerySet(models.QuerySet):
 
 
 class Order(models.Model):
-    objects = models.Manager()
-    orders = OrderQuerySet.as_manager()
+    objects = OrderQuerySet.as_manager()
 
     firstname = models.CharField('имя', max_length=100)
     lastname = models.CharField('фамилия', max_length=100)
