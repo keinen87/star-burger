@@ -128,6 +128,7 @@ class OrderAdmin(admin.ModelAdmin):
         'delivered_at',
         'status',
         'price',
+        'payment_type',
         'comment',
     ]
     readonly_fields = ['price', 'created_at']

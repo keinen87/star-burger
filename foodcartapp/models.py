@@ -142,6 +142,10 @@ class Order(models.Model):
         ('DELIVER', 'В доставке'),
         ('COMPLETE', 'Выполнен')
     ]
+    PAYMENT_TYPES = [
+        ('CARD', 'Электронно'),
+        ('CASH', 'Наличностью'),
+    ]
 
     firstname = models.CharField('имя', max_length=100)
     lastname = models.CharField('фамилия', max_length=100)
@@ -150,8 +154,9 @@ class Order(models.Model):
     created_at = models.DateTimeField('время заказа', auto_now_add=True, db_index=True)
     called_at = models.DateTimeField('время звонка', blank=True, null=True, db_index=True)
     delivered_at = models.DateTimeField('время доставки', blank=True, null=True, db_index=True)
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PROCESS', db_index=True)
-    comment = models.TextField('Комментарий', blank=True)
+    status = models.CharField('статус', max_length=10, choices=STATUS_CHOICES, default='PROCESS', db_index=True)
+    comment = models.TextField('комментарий', blank=True)
+    payment_type = models.CharField('способ оплаты', max_length=4, choices=PAYMENT_TYPES, default='CARD', db_index=True)
 
     class Meta:
         verbose_name = 'заказ'
