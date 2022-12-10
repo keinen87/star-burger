@@ -1,9 +1,7 @@
 from django.http import JsonResponse
 from django.templatetags.static import static
-from rest_framework import status
+from django.db import transaction
 from rest_framework.decorators import api_view
-from rest_framework.parsers import JSONParser
-from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 
 from .models import Order, OrderItem, Product
@@ -35,6 +33,32 @@ def banners_list_api(request):
     })
 
 
+@api_view(['POST'])
+@transaction.atomic
+def register_order(request):
+    serializer = OrderSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+
+    order = Order.objects.create(
+        firstname=serializer.validated_data['firstname'],
+        lastname=serializer.validated_data['lastname'],
+        phonenumber=serializer.validated_data['phonenumber'],
+        address=serializer.validated_data['address'],
+    )
+
+    products_fields = serializer.validated_data['products']
+    for product_fields in products_fields:
+        product = product_fields['product']
+        OrderItem.objects.create(
+            product=product,
+            order=order,
+            quantity=product_fields['quantity'],
+            product_price=product.price
+        )
+
+    return Response(serializer.data)
+
+
 def product_list_api(request):
     products = Product.objects.select_related('category').available()
 
@@ -61,28 +85,3 @@ def product_list_api(request):
         'ensure_ascii': False,
         'indent': 4,
     })
-
-
-@api_view(['POST'])
-def register_order(request):
-    serializer = OrderSerializer(data=request.data)
-    serializer.is_valid(raise_exception=True)
-
-    order = Order.objects.create(
-        firstname=serializer.validated_data['firstname'],
-        lastname=serializer.validated_data['lastname'],
-        phonenumber=serializer.validated_data['phonenumber'],
-        address=serializer.validated_data['address'],
-    )
-
-    products_fields = serializer.validated_data['products']
-    for product_fields in products_fields:
-        product = product_fields['product']
-        OrderItem.objects.create(
-            product=product,
-            order=order,
-            quantity=product_fields['quantity'],
-            product_price=product.price
-        )
-
-    return Response(serializer.data)
