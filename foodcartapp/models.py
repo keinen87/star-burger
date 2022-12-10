@@ -174,8 +174,7 @@ class OrderItem(models.Model):
         'Цена товара',
         max_digits=10,
         decimal_places=2,
-        validators=[MinValueValidator(0)],
-        null=True
+        validators=[MinValueValidator(0)]
     )
     quantity = models.PositiveSmallIntegerField('количество', default=1)
 
