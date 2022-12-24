@@ -133,10 +133,10 @@ class OrderQuerySet(models.QuerySet):
                 models.F('products__product_price') * models.F('products__quantity')
             ),
             custom_order=models.Case(
-                models.When(status=Order.STATUS_PROCESS, then=models.Value(0)),
-                models.When(status=Order.STATUS_COOKING, then=models.Value(1)),
-                models.When(status=Order.STATUS_DELIVER, then=models.Value(2)),
-                models.When(status=Order.STATUS_COMPLETE, then=models.Value(3)),
+                models.When(status=Order.PROCESS_STATUS, then=models.Value(0)),
+                models.When(status=Order.COOKING_STATUS, then=models.Value(1)),
+                models.When(status=Order.DELIVER_STATUS, then=models.Value(2)),
+                models.When(status=Order.COMPLETE_STATUS, then=models.Value(3)),
                 default=models.Value(4),
                 output_field=models.IntegerField()
             )
@@ -146,23 +146,23 @@ class OrderQuerySet(models.QuerySet):
 class Order(models.Model):
     objects = OrderQuerySet.as_manager()
 
-    STATUS_PROCESS = 'PROCESS'
-    STATUS_COOKING = 'COOKING'
-    STATUS_DELIVER = 'DELIVER'
-    STATUS_COMPLETE = 'COMPLETE'
+    PROCESS_STATUS = 'PROCESS'
+    COOKING_STATUS = 'COOKING'
+    DELIVER_STATUS = 'DELIVER'
+    COMPLETE_STATUS = 'COMPLETE'
 
-    PAYMENT_TYPE_CARD = 'CARD'
-    PAYMENT_TYPE_CASH = 'CASH'
+    CARD_PAYMENT_TYPE = 'CARD'
+    CASH_PAYMENT_TYPE = 'CASH'
 
     STATUS_CHOICES = [
-        (STATUS_PROCESS, 'Обрабатывается'),
-        (STATUS_COOKING, 'Готовится'),
-        (STATUS_DELIVER, 'В доставке'),
-        (STATUS_COMPLETE, 'Выполнен')
+        (PROCESS_STATUS, 'Обрабатывается'),
+        (COOKING_STATUS, 'Готовится'),
+        (DELIVER_STATUS, 'В доставке'),
+        (COMPLETE_STATUS, 'Выполнен')
     ]
     PAYMENT_TYPES = [
-        (PAYMENT_TYPE_CARD, 'Электронно'),
-        (PAYMENT_TYPE_CASH, 'Наличностью'),
+        (CARD_PAYMENT_TYPE, 'Электронно'),
+        (CASH_PAYMENT_TYPE, 'Наличностью'),
     ]
 
     firstname = models.CharField('имя', max_length=100)

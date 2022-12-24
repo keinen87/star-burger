@@ -37,7 +37,7 @@
         <td>{{ item.phonenumber }}</td>
         <td>{{ item.address }}</td>
         <td>
-          {% if item.status == 'PROCESS' %}
+          {% if item.status == process_status %}
             <details>
               <summary>Может быть приготовлен:</summary>
               <ul>

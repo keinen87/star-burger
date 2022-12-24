@@ -117,20 +117,6 @@ class OrderItemInline(admin.TabularInline):
 
 
 class OrderForm(forms.ModelForm):
-    # fields = [
-    #     'firstname',
-    #     'lastname',
-    #     'phonenumber',
-    #     'address',
-    #     'created_at',
-    #     'called_at',
-    #     'delivered_at',
-    #     'status',
-    #     'price',
-    #     'payment_type',
-    #     'comment',
-    #     'restaurant',
-    # ]
 
     class Meta:
         model = Order
@@ -148,7 +134,7 @@ class OrderForm(forms.ModelForm):
         ]
 
     def clean(self):
-        if self.cleaned_data['restaurant'] is None and self.cleaned_data['status'] != 'PROCESS':
+        if self.cleaned_data['restaurant'] is None and self.cleaned_data['status'] != Order.PROCESS_STATUS:
             raise forms.ValidationError({'restaurant': 'Вы должны выбрать ресторан'})
         return self.cleaned_data
 
@@ -170,8 +156,8 @@ class OrderAdmin(admin.ModelAdmin):
         return form
 
     def save_model(self, request, obj, form, change):
-        if form.cleaned_data['restaurant'] and form.cleaned_data['status'] == 'PROCESS':
-            obj.status = 'COOKING'
+        if form.cleaned_data['restaurant'] and form.cleaned_data['status'] == Order.PROCESS_STATUS:
+            obj.status = Order.COOKING_STATUS
 
         super().save_model(request, obj, form, change)
 
