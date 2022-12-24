@@ -131,21 +131,38 @@ class OrderQuerySet(models.QuerySet):
         return self.annotate(
             price=models.Sum(
                 models.F('products__product_price') * models.F('products__quantity')
+            ),
+            custom_order=models.Case(
+                models.When(status=Order.STATUS_PROCESS, then=models.Value(0)),
+                models.When(status=Order.STATUS_COOKING, then=models.Value(1)),
+                models.When(status=Order.STATUS_DELIVER, then=models.Value(2)),
+                models.When(status=Order.STATUS_COMPLETE, then=models.Value(3)),
+                default=models.Value(4),
+                output_field=models.IntegerField()
             )
-        ).prefetch_related('products').select_related('restaurant')
+        ).prefetch_related('products').select_related('restaurant').order_by('custom_order', 'created_at')
 
 
 class Order(models.Model):
     objects = OrderQuerySet.as_manager()
+
+    STATUS_PROCESS = 'PROCESS'
+    STATUS_COOKING = 'COOKING'
+    STATUS_DELIVER = 'DELIVER'
+    STATUS_COMPLETE = 'COMPLETE'
+
+    PAYMENT_TYPE_CARD = 'CARD'
+    PAYMENT_TYPE_CASH = 'CASH'
+
     STATUS_CHOICES = [
-        ('PROCESS', 'Обрабатывается'),
-        ('COOKING', 'Готовится'),
-        ('DELIVER', 'В доставке'),
-        ('COMPLETE', 'Выполнен')
+        (STATUS_PROCESS, 'Обрабатывается'),
+        (STATUS_COOKING, 'Готовится'),
+        (STATUS_DELIVER, 'В доставке'),
+        (STATUS_COMPLETE, 'Выполнен')
     ]
     PAYMENT_TYPES = [
-        ('CARD', 'Электронно'),
-        ('CASH', 'Наличностью'),
+        (PAYMENT_TYPE_CARD, 'Электронно'),
+        (PAYMENT_TYPE_CASH, 'Наличностью'),
     ]
 
     firstname = models.CharField('имя', max_length=100)
