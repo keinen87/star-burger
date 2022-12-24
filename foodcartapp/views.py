@@ -3,6 +3,7 @@ from django.templatetags.static import static
 from django.db import transaction
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework import status
 
 from .models import Order, OrderItem, Product
 
@@ -36,10 +37,16 @@ def banners_list_api(request):
 @api_view(['POST'])
 @transaction.atomic
 def register_order(request):
+    print(request.data)
     serializer = OrderSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
 
-    order = Order.objects.create(
+    product_ids = list(map(lambda order_item: order_item['product'].id, serializer.validated_data['products']))
+
+    if not Order.get_restaurant_ids_by_product_ids(product_ids):
+        return Response({}, status=status.HTTP_404_NOT_FOUND)
+
+    order = Order(
         firstname=serializer.validated_data['firstname'],
         lastname=serializer.validated_data['lastname'],
         phonenumber=serializer.validated_data['phonenumber'],
@@ -47,15 +54,20 @@ def register_order(request):
     )
 
     products_fields = serializer.validated_data['products']
+    order_items = []
     for product_fields in products_fields:
         product = product_fields['product']
-        OrderItem.objects.create(
-            product=product,
-            order=order,
-            quantity=product_fields['quantity'],
-            product_price=product.price
+        order_items.append(
+            OrderItem(
+                product=product,
+                order=order,
+                quantity=product_fields['quantity'],
+                product_price=product.price
+            )
         )
 
+    order.save()
+    OrderItem.objects.bulk_create(order_items)
     return Response(serializer.data)
 
 
