@@ -4,6 +4,7 @@ from django.shortcuts import reverse
 from django.templatetags.static import static
 from django.utils.html import format_html
 from django.utils.http import url_has_allowed_host_and_scheme
+from django import forms
 
 from .models import Order, OrderItem, Product
 from .models import ProductCategory
@@ -115,31 +116,64 @@ class OrderItemInline(admin.TabularInline):
     extra = 0
 
 
+class OrderForm(forms.ModelForm):
+    # fields = [
+    #     'firstname',
+    #     'lastname',
+    #     'phonenumber',
+    #     'address',
+    #     'created_at',
+    #     'called_at',
+    #     'delivered_at',
+    #     'status',
+    #     'price',
+    #     'payment_type',
+    #     'comment',
+    #     'restaurant',
+    # ]
+
+    class Meta:
+        model = Order
+        fields = [
+            'firstname',
+            'lastname',
+            'phonenumber',
+            'address',
+            'called_at',
+            'delivered_at',
+            'status',
+            'payment_type',
+            'comment',
+            'restaurant',
+        ]
+
+    def clean(self):
+        if self.cleaned_data['restaurant'] is None and self.cleaned_data['status'] != 'PROCESS':
+            raise forms.ValidationError({'restaurant': 'Вы должны выбрать ресторан'})
+        return self.cleaned_data
+
+
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    inlines = [OrderItemInline]
-    fields = [
-        'firstname',
-        'lastname',
-        'phonenumber',
-        'address',
-        'created_at',
-        'called_at',
-        'delivered_at',
-        'status',
-        'price',
-        'payment_type',
-        'comment',
-    ]
+    form = OrderForm
     readonly_fields = ['price', 'created_at']
+    inlines = [OrderItemInline]
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         return qs.with_price()
 
-    @admin.display(description='Сумма')
-    def price(self, obj):
-        return obj.price
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        restaurant_ids = list(map(lambda rest: rest.id, obj.get_available_restaurants()))
+        form.base_fields['restaurant'].queryset = Restaurant.objects.filter(id__in=restaurant_ids)
+        return form
+
+    def save_model(self, request, obj, form, change):
+        if form.cleaned_data['restaurant'] and form.cleaned_data['status'] == 'PROCESS':
+            obj.status = 'COOKING'
+
+        super().save_model(request, obj, form, change)
 
     def response_change(self, request, obj):
         res = super().response_post_save_change(request, obj)

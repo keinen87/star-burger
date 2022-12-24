@@ -1,7 +1,8 @@
 from django.db import models
 from django.core.validators import MinValueValidator
-from phonenumber_field.modelfields import PhoneNumberField
 from django.contrib import admin
+
+from phonenumber_field.modelfields import PhoneNumberField
 
 
 class Restaurant(models.Model):
@@ -131,7 +132,7 @@ class OrderQuerySet(models.QuerySet):
             price=models.Sum(
                 models.F('products__product_price') * models.F('products__quantity')
             )
-        )
+        ).prefetch_related('products').select_related('restaurant')
 
 
 class Order(models.Model):
@@ -156,7 +157,48 @@ class Order(models.Model):
     delivered_at = models.DateTimeField('время доставки', blank=True, null=True, db_index=True)
     status = models.CharField('статус', max_length=10, choices=STATUS_CHOICES, default='PROCESS', db_index=True)
     comment = models.TextField('комментарий', blank=True)
-    payment_type = models.CharField('способ оплаты', max_length=4, choices=PAYMENT_TYPES, default='CARD', db_index=True)
+    payment_type = models.CharField(
+        'способ оплаты',
+        max_length=4,
+        choices=PAYMENT_TYPES,
+        default='CARD',
+        db_index=True
+    )
+    restaurant = models.ForeignKey(
+        Restaurant,
+        verbose_name='ресторан',
+        related_name='orders',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+
+    def get_available_restaurants(self):
+        product_ids = list(self.products.all().values_list('product_id', flat=True))
+        return Order.get_restaurant_ids_by_product_ids(product_ids)
+
+    @classmethod
+    def get_restaurant_ids_by_product_ids(cls, product_ids):
+        menu_items = RestaurantMenuItem.objects \
+            .filter(availability=True, product_id__in=product_ids) \
+            .select_related('restaurant')
+
+        restaurant_by_products = []
+        for product_id in product_ids:
+            restaurants = {
+                menu_item.restaurant for menu_item in menu_items if menu_item.product_id == product_id
+            }
+            restaurant_by_products.append(restaurants)
+
+        return set.intersection(*restaurant_by_products)
+
+    @admin.display(description='Сумма')
+    def price(self, obj):
+        return obj.price
+
+    @admin.display(description='Рестораны')
+    def available_restaurants(self, obj):
+        return obj.get_available_restaurants()
 
     class Meta:
         verbose_name = 'заказ'
