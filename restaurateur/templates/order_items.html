@@ -1,7 +1,5 @@
 {% extends 'base_restaurateur_page.html' %}
 
-{% load order_restaurants %}
-
 {% block title %}Необработанные заказы | Star Burger{% endblock %}
 
 {% block content %}
@@ -27,7 +25,7 @@
       <th>Комментарий</th>
       <th>Ссылка на админку</th>
     </tr>
-    {% for item in order_items %}
+    {% for item, restaurants in order_items %}
       <tr>
         <td>{{ item.id }}</td>
         <td>{{ item.get_status_display }}</td>
@@ -41,8 +39,8 @@
             <details>
               <summary>Может быть приготовлен:</summary>
               <ul>
-                {% for restaurant in item|get_available_restaurants %}
-                  <li>{{ restaurant.name }}</li>
+                {% for restaurant, distance in restaurants %}
+                  <li>{{ restaurant.name }} - {{ distance }}</li>
                 {% endfor %}
               </ul>
             </details>

@@ -3,6 +3,9 @@ from django.core.validators import MinValueValidator
 from django.contrib import admin
 
 from phonenumber_field.modelfields import PhoneNumberField
+from geopy import distance
+
+from locations.models import Location
 
 
 class Restaurant(models.Model):
@@ -190,10 +193,6 @@ class Order(models.Model):
         blank=True
     )
 
-    def get_available_restaurants(self):
-        product_ids = list(self.products.all().values_list('product_id', flat=True))
-        return Order.get_restaurant_ids_by_product_ids(product_ids)
-
     @classmethod
     def get_restaurant_ids_by_product_ids(cls, product_ids):
         menu_items = RestaurantMenuItem.objects \
@@ -208,6 +207,35 @@ class Order(models.Model):
             restaurant_by_products.append(restaurants)
 
         return set.intersection(*restaurant_by_products)
+
+    def get_available_restaurants(self):
+        product_ids = list(self.products.all().values_list('product_id', flat=True))
+        return Order.get_restaurant_ids_by_product_ids(product_ids)
+
+    def get_available_restaurants_with_distance(self):
+        restaurants = self.get_available_restaurants()
+        restaurants_and_distance = []
+
+        for restaurant in restaurants:
+            restaurant_location, _ = Location.objects.get_or_create(address=restaurant.address)
+            delivery_location, _ = Location.objects.get_or_create(address=self.address)
+
+            # distance_between = ''
+            if restaurant_location.latitude is None or delivery_location.latitude is None:
+                distance_between = 'ошибка определения координат'
+            else:
+                distance_between = distance.distance(
+                    (restaurant_location.latitude, restaurant_location.longitude),
+                    (delivery_location.latitude, delivery_location.longitude),
+                ).km
+                distance_between = f'{round(distance_between, 1)} км'
+            restaurants_and_distance.append((restaurant, distance_between))
+
+        distance_index = 1
+        return sorted(
+            restaurants_and_distance,
+            key=lambda restaurant_and_distance: restaurant_and_distance[distance_index]
+        )
 
     @admin.display(description='Сумма')
     def price(self, obj):

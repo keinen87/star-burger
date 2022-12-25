@@ -10,7 +10,7 @@ env.read_env()
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-
+YANDEX_GEOCODE_KEY = env('YANDEX_KEY')
 
 SECRET_KEY = env('SECRET_KEY')
 DEBUG = env.bool('DEBUG', True)
@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     'debug_toolbar',
     'phonenumber_field',
     'rest_framework',
+    'locations',
 ]
 
 MIDDLEWARE = [
