@@ -1,5 +1,5 @@
 from django.db import models
-from .services import fetch_coordinates
+from .services.geocoder import fetch_coordinates
 
 
 class Location(models.Model):
