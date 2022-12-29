@@ -43,7 +43,7 @@ def register_order(request):
     product_ids = list(map(lambda order_item: order_item['product'].id, serializer.validated_data['products']))
 
     if not Order.get_restaurant_ids_by_product_ids(product_ids):
-        return Response({}, status=status.HTTP_404_NOT_FOUND)
+        return Response({}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
     order = Order(
         firstname=serializer.validated_data['firstname'],
