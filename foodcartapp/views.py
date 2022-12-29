@@ -50,7 +50,10 @@ def register_order(request):
     )
 
     if not order.get_available_restaurants(product_ids):
-        return Response({}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+        return Response(
+            {'message': 'Не найдены рестораны, способные обработать данный заказ.'},
+            status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        )
 
     Location.create_location_by_address(serializer.validated_data['address'])
 
