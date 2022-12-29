@@ -133,7 +133,7 @@ class OrderQuerySet(models.QuerySet):
     def with_price(self):
         return self.annotate(
             price=models.Sum(
-                models.F('products__product_price') * models.F('products__quantity')
+                models.F('order_items__product_price') * models.F('order_items__quantity')
             ),
             custom_order=models.Case(
                 models.When(status=Order.PROCESS_STATUS, then=models.Value(0)),
@@ -143,7 +143,7 @@ class OrderQuerySet(models.QuerySet):
                 default=models.Value(4),
                 output_field=models.IntegerField()
             )
-        ).prefetch_related('products').select_related('restaurant').order_by('custom_order', 'created_at')
+        ).select_related('restaurant').order_by('custom_order', 'created_at')
 
 
 class Order(models.Model):
@@ -209,7 +209,7 @@ class Order(models.Model):
         return set.intersection(*restaurant_by_products)
 
     def get_available_restaurants(self):
-        product_ids = list(self.products.all().values_list('product_id', flat=True))
+        product_ids = list(self.order_items.all().values_list('product_id', flat=True))
         return Order.get_restaurant_ids_by_product_ids(product_ids)
 
     def get_available_restaurants_with_distance(self):
@@ -267,7 +267,7 @@ class OrderItem(models.Model):
     )
     order = models.ForeignKey(
         Order,
-        related_name='products',
+        related_name='order_items',
         verbose_name='заказ',
         on_delete=models.CASCADE
     )
