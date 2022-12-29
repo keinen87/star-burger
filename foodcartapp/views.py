@@ -42,15 +42,15 @@ def register_order(request):
 
     product_ids = list(map(lambda order_item: order_item['product'].id, serializer.validated_data['products']))
 
-    if not Order.get_restaurant_ids_by_product_ids(product_ids):
-        return Response({}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
-
     order = Order(
         firstname=serializer.validated_data['firstname'],
         lastname=serializer.validated_data['lastname'],
         phonenumber=serializer.validated_data['phonenumber'],
         address=serializer.validated_data['address'],
     )
+
+    if not order.get_available_restaurants(product_ids):
+        return Response({}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
     Location.create_location_by_address(serializer.validated_data['address'])
 

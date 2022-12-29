@@ -205,9 +205,24 @@ class Order(models.Model):
     def __str__(self):
         return f'Заказ {self.id}'
 
-    def get_available_restaurants(self):
-        product_ids = list(self.order_items.all().values_list('product_id', flat=True))
-        return Order.get_restaurant_ids_by_product_ids(product_ids)
+    def get_available_restaurants(self, not_init_product_ids=None):
+        if not_init_product_ids is None:
+            product_ids = list(self.order_items.all().values_list('product_id', flat=True))
+        else:
+            product_ids = not_init_product_ids
+
+        menu_items = RestaurantMenuItem.objects \
+            .filter(availability=True, product_id__in=product_ids) \
+            .select_related('restaurant')
+
+        restaurant_by_products = []
+        for product_id in product_ids:
+            restaurants = {
+                menu_item.restaurant for menu_item in menu_items if menu_item.product_id == product_id
+            }
+            restaurant_by_products.append(restaurants)
+
+        return set.intersection(*restaurant_by_products)
 
     def get_available_restaurants_with_distance(self):
         restaurants = self.get_available_restaurants()
@@ -240,21 +255,6 @@ class Order(models.Model):
     @admin.display(description='Рестораны')
     def available_restaurants(self, obj):
         return obj.get_available_restaurants()
-
-    @classmethod
-    def get_restaurant_ids_by_product_ids(cls, product_ids):
-        menu_items = RestaurantMenuItem.objects \
-            .filter(availability=True, product_id__in=product_ids) \
-            .select_related('restaurant')
-
-        restaurant_by_products = []
-        for product_id in product_ids:
-            restaurants = {
-                menu_item.restaurant for menu_item in menu_items if menu_item.product_id == product_id
-            }
-            restaurant_by_products.append(restaurants)
-
-        return set.intersection(*restaurant_by_products)
 
 
 class OrderItem(models.Model):
