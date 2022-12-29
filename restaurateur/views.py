@@ -9,6 +9,7 @@ from django.contrib.auth import views as auth_views
 
 
 from foodcartapp.models import Order, Product, Restaurant
+from restaurateur.utils.sort_funcs import sort_orders_by_status
 
 
 class Login(forms.Form):
@@ -92,7 +93,7 @@ def view_restaurants(request):
 
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
-    orders = Order.objects.with_price()
+    orders = sort_orders_by_status(Order.objects.with_price())
 
     orders_with_restaurants_and_locations = []
     for order in orders:

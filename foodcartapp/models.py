@@ -134,16 +134,8 @@ class OrderQuerySet(models.QuerySet):
         return self.annotate(
             price=models.Sum(
                 models.F('order_items__product_price') * models.F('order_items__quantity')
-            ),
-            custom_order=models.Case(
-                models.When(status=Order.PROCESS_STATUS, then=models.Value(0)),
-                models.When(status=Order.COOKING_STATUS, then=models.Value(1)),
-                models.When(status=Order.DELIVER_STATUS, then=models.Value(2)),
-                models.When(status=Order.COMPLETE_STATUS, then=models.Value(3)),
-                default=models.Value(4),
-                output_field=models.IntegerField()
             )
-        ).select_related('processing_restaurant').order_by('custom_order', 'created_at')
+        ).select_related('processing_restaurant').order_by('created_at')
 
 
 class Order(models.Model):
