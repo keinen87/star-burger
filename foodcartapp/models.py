@@ -143,7 +143,7 @@ class OrderQuerySet(models.QuerySet):
                 default=models.Value(4),
                 output_field=models.IntegerField()
             )
-        ).select_related('restaurant').order_by('custom_order', 'created_at')
+        ).select_related('processing_restaurant').order_by('custom_order', 'created_at')
 
 
 class Order(models.Model):
@@ -182,9 +182,9 @@ class Order(models.Model):
         default=CARD_PAYMENT_TYPE,
         db_index=True
     )
-    restaurant = models.ForeignKey(
+    processing_restaurant = models.ForeignKey(
         Restaurant,
-        verbose_name='ресторан',
+        verbose_name='обрабатывающий ресторан',
         related_name='orders',
         on_delete=models.SET_NULL,
         null=True,

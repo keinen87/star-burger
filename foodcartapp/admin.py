@@ -136,11 +136,11 @@ class OrderForm(forms.ModelForm):
             'status',
             'payment_type',
             'comment',
-            'restaurant',
+            'processing_restaurant',
         ]
 
     def clean(self):
-        if self.cleaned_data['restaurant'] is None and self.cleaned_data['status'] != Order.PROCESS_STATUS:
+        if self.cleaned_data['processing_restaurant'] is None and self.cleaned_data['status'] != Order.PROCESS_STATUS:
             raise forms.ValidationError({'restaurant': 'Вы должны выбрать ресторан'})
         return self.cleaned_data
 
@@ -158,11 +158,11 @@ class OrderAdmin(admin.ModelAdmin):
     def get_form(self, request, obj=None, **kwargs):
         form = super().get_form(request, obj, **kwargs)
         restaurant_ids = list(map(lambda rest: rest.id, obj.get_available_restaurants()))
-        form.base_fields['restaurant'].queryset = Restaurant.objects.filter(id__in=restaurant_ids)
+        form.base_fields['processing_restaurant'].queryset = Restaurant.objects.filter(id__in=restaurant_ids)
         return form
 
     def save_model(self, request, obj, form, change):
-        if form.cleaned_data['restaurant'] and form.cleaned_data['status'] == Order.PROCESS_STATUS:
+        if form.cleaned_data['processing_restaurant'] and form.cleaned_data['status'] == Order.PROCESS_STATUS:
             obj.status = Order.COOKING_STATUS
 
         if not change or 'address' in form.changed_data:
