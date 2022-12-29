@@ -49,6 +49,7 @@ class App extends Component {
 
   async handleCheckout({firstname, lastname, phonenumber, address}){
     const url = "api/order/";
+    const defaultErrorMessage = 'Ошибка при оформлении заказа. Попробуйте ещё раз или свяжитесь с нами по телефону.'
     let data = {
       'products': this.state.cart.map(item=>({
         product: item.id,
@@ -74,7 +75,10 @@ class App extends Component {
       });
 
       if (!response.ok){
-        alert('Ошибка при оформлении заказа. Попробуйте ещё раз или свяжитесь с нами по телефону.');
+        const { message } = await response.json();
+
+        !!message ? alert(message) : alert(defaultErrorMessage)
+
         return;
       }
       let responseData = await response.json();
@@ -87,7 +91,7 @@ class App extends Component {
 
       this.handleCartClose();
     } catch(error){
-      alert('Ошибка при оформлении заказа. Попробуйте ещё раз или свяжитесь с нами по телефону.');
+      alert(defaultErrorMessage);
       throw error;
     };
   }
