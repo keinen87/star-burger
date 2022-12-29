@@ -9,6 +9,13 @@ class Location(models.Model):
     latitude = models.FloatField('широта')
     last_request_to_geocoder = models.DateTimeField('дата запроса координат', auto_now_add=True)
 
+    class Meta:
+        verbose_name = 'локация'
+        verbose_name_plural = 'локации'
+
+    def __str__(self):
+        return self.address
+
     @classmethod
     def create_location_by_address(cls, address):
         coords = fetch_coordinates(address)
@@ -31,7 +38,3 @@ class Location(models.Model):
         except cls.DoesNotExist:
             location = None
         return location
-
-    class Meta:
-        verbose_name = 'локация'
-        verbose_name_plural = 'локации'

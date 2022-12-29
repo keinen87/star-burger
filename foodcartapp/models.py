@@ -147,8 +147,6 @@ class OrderQuerySet(models.QuerySet):
 
 
 class Order(models.Model):
-    objects = OrderQuerySet.as_manager()
-
     PROCESS_STATUS = 'PROCESS'
     COOKING_STATUS = 'COOKING'
     DELIVER_STATUS = 'DELIVER'
@@ -193,20 +191,19 @@ class Order(models.Model):
         blank=True
     )
 
-    @classmethod
-    def get_restaurant_ids_by_product_ids(cls, product_ids):
-        menu_items = RestaurantMenuItem.objects \
-            .filter(availability=True, product_id__in=product_ids) \
-            .select_related('restaurant')
+    objects = OrderQuerySet.as_manager()
 
-        restaurant_by_products = []
-        for product_id in product_ids:
-            restaurants = {
-                menu_item.restaurant for menu_item in menu_items if menu_item.product_id == product_id
-            }
-            restaurant_by_products.append(restaurants)
+    class Meta:
+        verbose_name = 'заказ'
+        verbose_name_plural = 'заказы'
+        indexes = [
+            models.Index(fields=['firstname', 'lastname']),
+            models.Index(fields=['phonenumber']),
+            models.Index(fields=['created_at']),
+        ]
 
-        return set.intersection(*restaurant_by_products)
+    def __str__(self):
+        return f'Заказ {self.id}'
 
     def get_available_restaurants(self):
         product_ids = list(self.order_items.all().values_list('product_id', flat=True))
@@ -244,17 +241,20 @@ class Order(models.Model):
     def available_restaurants(self, obj):
         return obj.get_available_restaurants()
 
-    class Meta:
-        verbose_name = 'заказ'
-        verbose_name_plural = 'заказы'
-        indexes = [
-            models.Index(fields=['firstname', 'lastname']),
-            models.Index(fields=['phonenumber']),
-            models.Index(fields=['created_at']),
-        ]
+    @classmethod
+    def get_restaurant_ids_by_product_ids(cls, product_ids):
+        menu_items = RestaurantMenuItem.objects \
+            .filter(availability=True, product_id__in=product_ids) \
+            .select_related('restaurant')
 
-    def __str__(self):
-        return f'Заказ {self.id}'
+        restaurant_by_products = []
+        for product_id in product_ids:
+            restaurants = {
+                menu_item.restaurant for menu_item in menu_items if menu_item.product_id == product_id
+            }
+            restaurant_by_products.append(restaurants)
+
+        return set.intersection(*restaurant_by_products)
 
 
 class OrderItem(models.Model):
@@ -278,9 +278,9 @@ class OrderItem(models.Model):
     )
     quantity = models.PositiveSmallIntegerField('количество', default=1)
 
-    def __str__(self):
-        return self.product.name
-
     class Meta:
         verbose_name = 'продукт'
         verbose_name_plural = 'продукты'
+
+    def __str__(self):
+        return self.product.name
