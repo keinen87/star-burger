@@ -5,8 +5,8 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 
+from locations.models import Location
 from .models import Order, OrderItem, Product
-
 from .serializers import OrderSerializer
 
 
@@ -37,7 +37,6 @@ def banners_list_api(request):
 @api_view(['POST'])
 @transaction.atomic
 def register_order(request):
-    print(request.data)
     serializer = OrderSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
 
@@ -52,6 +51,8 @@ def register_order(request):
         phonenumber=serializer.validated_data['phonenumber'],
         address=serializer.validated_data['address'],
     )
+
+    Location.create_location_by_address(serializer.validated_data['address'])
 
     products_fields = serializer.validated_data['products']
     order_items = []

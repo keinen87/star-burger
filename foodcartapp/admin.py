@@ -10,6 +10,7 @@ from .models import Order, OrderItem, Product
 from .models import ProductCategory
 from .models import Restaurant
 from .models import RestaurantMenuItem
+from locations.models import Location
 from star_burger.settings import ALLOWED_HOSTS
 
 
@@ -33,6 +34,11 @@ class RestaurantAdmin(admin.ModelAdmin):
     inlines = [
         RestaurantMenuItemInline
     ]
+
+    def save_model(self, request, obj, form, change):
+        if not change or 'address' in form.changed_data:
+            Location.create_location_by_address(form.cleaned_data['address'])
+        super().save_model(request, obj, form, change)
 
 
 @admin.register(Product)
@@ -158,6 +164,9 @@ class OrderAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         if form.cleaned_data['restaurant'] and form.cleaned_data['status'] == Order.PROCESS_STATUS:
             obj.status = Order.COOKING_STATUS
+
+        if not change or 'address' in form.changed_data:
+            Location.create_location_by_address(form.cleaned_data['address'])
 
         super().save_model(request, obj, form, change)
 

@@ -1,21 +1,37 @@
 from django.db import models
-from .services.geocoder import fetch_coordinates
+
+from locations.services.geocoder import fetch_coordinates
 
 
 class Location(models.Model):
     address = models.CharField('адрес', max_length=255, unique=True)
-    longitude = models.FloatField('долгота', null=True, blank=True)
-    latitude = models.FloatField('широта', null=True, blank=True)
-    updated_at = models.DateTimeField('дата обновления', auto_now=True)
+    longitude = models.FloatField('долгота')
+    latitude = models.FloatField('широта')
+    last_request_to_geocoder = models.DateTimeField('дата запроса координат', auto_now_add=True)
+
+    @classmethod
+    def create_location_by_address(cls, address):
+        coords = fetch_coordinates(address)
+        if coords is not None:
+            longitude, latitude = coords
+            location, created = Location.objects.get_or_create(
+                address=address,
+                defaults={
+                    'longitude': longitude,
+                    'latitude': latitude,
+                }
+            )
+            return location
+        return None
+
+    @classmethod
+    def get_location_or_none(cls, address):
+        try:
+            location = cls.objects.get(address=address)
+        except cls.DoesNotExist:
+            location = None
+        return location
 
     class Meta:
         verbose_name = 'локация'
         verbose_name_plural = 'локации'
-
-    def save(self, *args, **kwargs):
-        coordinates = fetch_coordinates(self.address)
-        if coordinates is None:
-            return super().save(*args, **kwargs)
-
-        self.longitude, self.latitude = coordinates
-        super().save(*args, **kwargs)

@@ -217,11 +217,10 @@ class Order(models.Model):
         restaurants_and_distance = []
 
         for restaurant in restaurants:
-            restaurant_location, _ = Location.objects.get_or_create(address=restaurant.address)
-            delivery_location, _ = Location.objects.get_or_create(address=self.address)
+            restaurant_location = Location.get_location_or_none(restaurant.address)
+            delivery_location = Location.get_location_or_none(self.address)
 
-            # distance_between = ''
-            if restaurant_location.latitude is None or delivery_location.latitude is None:
+            if restaurant_location is None or delivery_location is None:
                 distance_between = 'ошибка определения координат'
             else:
                 distance_between = distance.distance(
