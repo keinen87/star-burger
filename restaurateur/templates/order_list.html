@@ -25,17 +25,17 @@
       <th>Комментарий</th>
       <th>Ссылка на админку</th>
     </tr>
-    {% for item, restaurants in order_items %}
+    {% for order, restaurants in orders %}
       <tr>
-        <td>{{ item.id }}</td>
-        <td>{{ item.get_status_display }}</td>
-        <td>{{ item.get_payment_type_display }}</td>
-        <td>{{ item.price }}</td>
-        <td>{{ item.firstname }} {{ item.lastname }}</td>
-        <td>{{ item.phonenumber }}</td>
-        <td>{{ item.address }}</td>
+        <td>{{ order.id }}</td>
+        <td>{{ order.get_status_display }}</td>
+        <td>{{ order.get_payment_type_display }}</td>
+        <td>{{ order.price }}</td>
+        <td>{{ order.firstname }} {{ order.lastname }}</td>
+        <td>{{ order.phonenumber }}</td>
+        <td>{{ order.address }}</td>
         <td>
-          {% if item.status == process_status %}
+          {% if order.status == process_status %}
             <details>
               <summary>Может быть приготовлен:</summary>
               <ul>
@@ -45,12 +45,12 @@
               </ul>
             </details>
           {% else %}
-            Готовит: {{ item.restaurant.name }}
+            Готовит: {{ order.restaurant.name }}
           {% endif %}
 
         </td>
-        <td>{{ item.comment }}</td>
-        <td><a href="{% url 'admin:foodcartapp_order_change' item.id %}?next={{ request.build_absolute_uri|urlencode }} ">Редактировать</a></td>
+        <td>{{ order.comment }}</td>
+        <td><a href="{% url 'admin:foodcartapp_order_change' order.id %}?next={{ request.build_absolute_uri|urlencode }} ">Редактировать</a></td>
       </tr>
     {% endfor %}
    </table>

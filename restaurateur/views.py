@@ -92,18 +92,18 @@ def view_restaurants(request):
 
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
-    order_items = Order.objects.with_price()
+    orders = Order.objects.with_price()
 
-    order_items_with_restaurants_and_locations = []
-    for order_item in order_items:
-        order_items_with_restaurants_and_locations.append(
+    orders_with_restaurants_and_locations = []
+    for order in orders:
+        orders_with_restaurants_and_locations.append(
             [
-                order_item,
-                order_item.get_available_restaurants_with_distance()
+                order,
+                order.get_available_restaurants_with_distance()
             ]
         )
 
-    return render(request, template_name='order_items.html', context={
-        'order_items': order_items_with_restaurants_and_locations,
+    return render(request, template_name='order_list.html', context={
+        'orders': orders_with_restaurants_and_locations,
         'process_status': Order.PROCESS_STATUS,
     })
