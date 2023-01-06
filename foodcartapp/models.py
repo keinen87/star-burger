@@ -268,7 +268,11 @@ class OrderItem(models.Model):
         decimal_places=2,
         validators=[MinValueValidator(0)]
     )
-    quantity = models.PositiveSmallIntegerField('количество', default=1)
+    quantity = models.PositiveSmallIntegerField(
+        'количество',
+        default=1,
+        validators=[MinValueValidator(1)]
+    )
 
     class Meta:
         verbose_name = 'продукт'
