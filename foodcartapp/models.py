@@ -133,7 +133,7 @@ class OrderQuerySet(models.QuerySet):
     def with_price(self):
         return self.annotate(
             price=models.Sum(
-                models.F('order_items__product_price') * models.F('order_items__quantity')
+                models.F('items__product_price') * models.F('items__quantity')
             )
         ).select_related('processing_restaurant').order_by('created_at')
 
@@ -199,7 +199,7 @@ class Order(models.Model):
 
     def get_available_restaurants(self, not_init_product_ids=None):
         if not_init_product_ids is None:
-            product_ids = list(self.order_items.all().values_list('product_id', flat=True))
+            product_ids = list(self.items.all().values_list('product_id', flat=True))
         else:
             product_ids = not_init_product_ids
 
@@ -258,7 +258,7 @@ class OrderItem(models.Model):
     )
     order = models.ForeignKey(
         Order,
-        related_name='order_items',
+        related_name='items',
         verbose_name='заказ',
         on_delete=models.CASCADE
     )
