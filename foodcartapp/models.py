@@ -1,7 +1,6 @@
 from django.db import models
 from django.core.validators import MinValueValidator
 from django.contrib import admin
-from django.db.models import OuterRef, Prefetch, Subquery
 
 from phonenumber_field.modelfields import PhoneNumberField
 from geopy import distance
@@ -140,10 +139,10 @@ class OrderQuerySet(models.QuerySet):
 
 
 class Order(models.Model):
-    PROCESS_STATUS = 'PROCESS'
-    COOKING_STATUS = 'COOKING'
-    DELIVER_STATUS = 'DELIVER'
-    COMPLETE_STATUS = 'COMPLETE'
+    PROCESS_STATUS = 1
+    COOKING_STATUS = 2
+    DELIVER_STATUS = 3
+    COMPLETE_STATUS = 4
 
     CARD_PAYMENT_TYPE = 'CARD'
     CASH_PAYMENT_TYPE = 'CASH'
@@ -166,7 +165,7 @@ class Order(models.Model):
     created_at = models.DateTimeField('время заказа', auto_now_add=True, db_index=True)
     called_at = models.DateTimeField('время звонка', blank=True, null=True, db_index=True)
     delivered_at = models.DateTimeField('время доставки', blank=True, null=True, db_index=True)
-    status = models.CharField('статус', max_length=10, choices=STATUS_CHOICES, default='PROCESS', db_index=True)
+    status = models.IntegerField('статус', choices=STATUS_CHOICES, default=PROCESS_STATUS, db_index=True)
     comment = models.TextField('комментарий', blank=True)
     payment_type = models.CharField(
         'способ оплаты',
@@ -228,7 +227,7 @@ class Order(models.Model):
 
     @classmethod
     def get_orders_with_available_restaurants(cls):
-        orders = Order.objects.with_price().select_related('processing_restaurant')
+        orders = Order.objects.with_price().select_related('processing_restaurant').order_by('status')
         menu_items = RestaurantMenuItem.objects.filter(availability=True).select_related('restaurant')
 
         orders_with_restaurants_and_locations = []

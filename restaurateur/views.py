@@ -9,7 +9,6 @@ from django.contrib.auth import views as auth_views
 
 
 from foodcartapp.models import Order, Product, Restaurant, RestaurantMenuItem
-from restaurateur.utils.sort_funcs import sort_orders_by_status
 
 
 class Login(forms.Form):
