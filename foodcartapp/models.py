@@ -171,7 +171,8 @@ class Order(models.Model):
         'способ оплаты',
         max_length=4,
         choices=PAYMENT_TYPES,
-        default=CARD_PAYMENT_TYPE,
+        null=True,
+        blank=True,
         db_index=True
     )
     processing_restaurant = models.ForeignKey(
