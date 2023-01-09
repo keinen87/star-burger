@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from locations.models import Location
+from .helpers.restaurant_helpers import get_available_restaurants
 from .models import Order, OrderItem, Product
 from .serializers import OrderSerializer
 
@@ -41,6 +42,12 @@ def register_order(request):
     serializer.is_valid(raise_exception=True)
 
     product_ids = list(map(lambda order_item: order_item['product'].id, serializer.validated_data['products']))
+    available_restaurants = get_available_restaurants(product_ids)
+    if not available_restaurants:
+        return Response(
+            {'message': 'Не найдены рестораны, способные обработать данный заказ.'},
+            status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        )
 
     order = Order(
         firstname=serializer.validated_data['firstname'],
@@ -48,12 +55,6 @@ def register_order(request):
         phonenumber=serializer.validated_data['phonenumber'],
         address=serializer.validated_data['address'],
     )
-
-    if not order.get_available_restaurants(uninitialized_product_ids=product_ids):
-        return Response(
-            {'message': 'Не найдены рестораны, способные обработать данный заказ.'},
-            status=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        )
 
     Location.create_location_by_address(serializer.validated_data['address'])
 

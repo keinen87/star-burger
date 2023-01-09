@@ -7,8 +7,8 @@ from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import views as auth_views
 
-
-from foodcartapp.models import Order, Product, Restaurant, RestaurantMenuItem
+from foodcartapp.helpers.order_helpers import get_orders_with_available_restaurants
+from foodcartapp.models import Order, Product, Restaurant
 
 
 class Login(forms.Form):
@@ -92,7 +92,7 @@ def view_restaurants(request):
 
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
-    orders_with_restaurants_and_locations = Order.get_orders_with_available_restaurants()
+    orders_with_restaurants_and_locations = get_orders_with_available_restaurants()
 
     return render(request, template_name='order_list.html', context={
         'orders_and_restaurants': orders_with_restaurants_and_locations,

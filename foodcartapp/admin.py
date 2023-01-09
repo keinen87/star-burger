@@ -6,6 +6,7 @@ from django.utils.html import format_html
 from django.utils.http import url_has_allowed_host_and_scheme
 from django import forms
 
+from .helpers.restaurant_helpers import get_available_restaurants
 from .models import Order, OrderItem, Product
 from .models import ProductCategory
 from .models import Restaurant
@@ -153,11 +154,12 @@ class OrderAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        return qs.with_price()
+        return qs.with_price().select_related('processing_restaurant')
 
     def get_form(self, request, obj=None, **kwargs):
         form = super().get_form(request, obj, **kwargs)
-        restaurant_ids = list(map(lambda rest: rest.id, obj.get_available_restaurants()))
+        product_ids = obj.items.values_list('product_id', flat=True)
+        restaurant_ids = list(map(lambda rest: rest.id, get_available_restaurants(product_ids)))
         form.base_fields['processing_restaurant'].queryset = Restaurant.objects.filter(id__in=restaurant_ids)
         return form
 
@@ -176,3 +178,11 @@ class OrderAdmin(admin.ModelAdmin):
             return HttpResponseRedirect(request.GET['next'])
         else:
             return res
+
+    @admin.display(description='Сумма')
+    def price(self, obj):
+        return obj.price
+
+    @admin.display(description='Рестораны')
+    def available_restaurants(self, obj):
+        return get_available_restaurants(obj.items.values_list('product_ids', flat=True))

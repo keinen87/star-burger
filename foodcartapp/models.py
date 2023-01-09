@@ -1,9 +1,7 @@
 from django.db import models
 from django.core.validators import MinValueValidator
-from django.contrib import admin
 
 from phonenumber_field.modelfields import PhoneNumberField
-from geopy import distance
 
 from locations.models import Location
 
@@ -197,80 +195,6 @@ class Order(models.Model):
 
     def __str__(self):
         return f'Заказ {self.id}'
-
-    def get_available_restaurants(self, menu_items=None, uninitialized_product_ids=None):
-        if uninitialized_product_ids is None:
-            product_ids = list(self.items.values_list('product_id', flat=True))
-        else:
-            product_ids = uninitialized_product_ids
-
-        if menu_items is None:
-            menu_items_by_product_ids = RestaurantMenuItem.objects.filter(
-                availability=True,
-                product_id__in=product_ids,
-            )
-        else:
-            menu_items_by_product_ids = set(
-                filter(
-                    lambda menu_item: menu_item.product_id in product_ids,
-                    menu_items
-                )
-            )
-
-        restaurant_by_products = []
-        for product_id in product_ids:
-            restaurants = {
-                menu_item.restaurant for menu_item in menu_items_by_product_ids if menu_item.product_id == product_id
-            }
-            restaurant_by_products.append(restaurants)
-
-        return set.intersection(*restaurant_by_products)
-
-    @classmethod
-    def get_orders_with_available_restaurants(cls):
-        orders = Order.objects.with_price().select_related('processing_restaurant').order_by('status')
-        menu_items = RestaurantMenuItem.objects.filter(availability=True).select_related('restaurant')
-
-        orders_with_restaurants_and_locations = []
-        for order in orders:
-            restaurants = order.get_available_restaurants(menu_items=menu_items)
-            restaurant_addresses = list(map(lambda rest: rest.address, restaurants))
-            locations_by_addresses = Location.objects.in_bulk(
-                {order.address, *restaurant_addresses},
-                field_name='address',
-            )
-            delivery_location = locations_by_addresses.get(order.address)
-
-            restaurants_and_distances = []
-
-            for restaurant in restaurants:
-                restaurant_location = locations_by_addresses.get(restaurant.address)
-                if restaurant_location is None or delivery_location is None:
-                    distance_between = None
-                else:
-                    distance_between = distance.distance(
-                        (restaurant_location.latitude, restaurant_location.longitude),
-                        (delivery_location.latitude, delivery_location.longitude),
-                    ).km
-                    distance_between = round(distance_between, 1)
-
-                restaurants_and_distances.append([restaurant, distance_between])
-
-            sorted_restaurants_and_distances = sorted(
-                restaurants_and_distances,
-                key=lambda restaurant_and_distance: (restaurant_and_distance[1] is None, restaurant_and_distance[1]),
-            )
-            orders_with_restaurants_and_locations.append([order, sorted_restaurants_and_distances])
-
-        return orders_with_restaurants_and_locations
-
-    @admin.display(description='Сумма')
-    def price(self, obj):
-        return obj.price
-
-    @admin.display(description='Рестораны')
-    def available_restaurants(self, obj):
-        return obj.get_available_restaurants()
 
 
 class OrderItem(models.Model):
