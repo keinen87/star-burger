@@ -1,6 +1,7 @@
 from django.db import models
 from django.core.validators import MinValueValidator
 from django.contrib import admin
+from django.db.models import OuterRef, Prefetch, Subquery
 
 from phonenumber_field.modelfields import PhoneNumberField
 from geopy import distance
@@ -134,8 +135,8 @@ class OrderQuerySet(models.QuerySet):
         return self.annotate(
             price=models.Sum(
                 models.F('items__product_price') * models.F('items__quantity')
-            )
-        ).select_related('processing_restaurant').order_by('created_at')
+            ),
+        )
 
 
 class Order(models.Model):
@@ -197,48 +198,71 @@ class Order(models.Model):
     def __str__(self):
         return f'Заказ {self.id}'
 
-    def get_available_restaurants(self, not_init_product_ids=None):
-        if not_init_product_ids is None:
-            product_ids = list(self.items.all().values_list('product_id', flat=True))
+    def get_available_restaurants(self, menu_items=None, uninitialized_product_ids=None):
+        if uninitialized_product_ids is None:
+            product_ids = list(self.items.values_list('product_id', flat=True))
         else:
-            product_ids = not_init_product_ids
+            product_ids = uninitialized_product_ids
 
-        menu_items = RestaurantMenuItem.objects \
-            .filter(availability=True, product_id__in=product_ids) \
-            .select_related('restaurant')
+        if menu_items is None:
+            menu_items_by_product_ids = RestaurantMenuItem.objects.filter(
+                availability=True,
+                product_id__in=product_ids,
+            )
+        else:
+            menu_items_by_product_ids = set(
+                filter(
+                    lambda menu_item: menu_item.product_id in product_ids,
+                    menu_items
+                )
+            )
 
         restaurant_by_products = []
         for product_id in product_ids:
             restaurants = {
-                menu_item.restaurant for menu_item in menu_items if menu_item.product_id == product_id
+                menu_item.restaurant for menu_item in menu_items_by_product_ids if menu_item.product_id == product_id
             }
             restaurant_by_products.append(restaurants)
 
         return set.intersection(*restaurant_by_products)
 
-    def get_available_restaurants_with_distance(self):
-        restaurants = self.get_available_restaurants()
-        restaurants_and_distance = []
+    @classmethod
+    def get_orders_with_available_restaurants(cls):
+        orders = Order.objects.with_price().select_related('processing_restaurant')
+        menu_items = RestaurantMenuItem.objects.filter(availability=True).select_related('restaurant')
 
-        for restaurant in restaurants:
-            restaurant_location = Location.get_location_or_none(restaurant.address)
-            delivery_location = Location.get_location_or_none(self.address)
+        orders_with_restaurants_and_locations = []
+        for order in orders:
+            restaurants = order.get_available_restaurants(menu_items=menu_items)
+            restaurant_addresses = list(map(lambda rest: rest.address, restaurants))
+            locations_by_addresses = Location.objects.in_bulk(
+                {order.address, *restaurant_addresses},
+                field_name='address',
+            )
+            delivery_location = locations_by_addresses.get(order.address)
 
-            if restaurant_location is None or delivery_location is None:
-                distance_between = 'ошибка определения координат'
-            else:
-                distance_between = distance.distance(
-                    (restaurant_location.latitude, restaurant_location.longitude),
-                    (delivery_location.latitude, delivery_location.longitude),
-                ).km
-                distance_between = f'{round(distance_between, 1)} км'
-            restaurants_and_distance.append((restaurant, distance_between))
+            restaurants_and_distances = []
 
-        distance_index = 1
-        return sorted(
-            restaurants_and_distance,
-            key=lambda restaurant_and_distance: restaurant_and_distance[distance_index]
-        )
+            for restaurant in restaurants:
+                restaurant_location = locations_by_addresses.get(restaurant.address)
+                if restaurant_location is None or delivery_location is None:
+                    distance_between = None
+                else:
+                    distance_between = distance.distance(
+                        (restaurant_location.latitude, restaurant_location.longitude),
+                        (delivery_location.latitude, delivery_location.longitude),
+                    ).km
+                    distance_between = round(distance_between, 1)
+
+                restaurants_and_distances.append([restaurant, distance_between])
+
+            sorted_restaurants_and_distances = sorted(
+                restaurants_and_distances,
+                key=lambda restaurant_and_distance: (restaurant_and_distance[1] is None, restaurant_and_distance[1]),
+            )
+            orders_with_restaurants_and_locations.append([order, sorted_restaurants_and_distances])
+
+        return orders_with_restaurants_and_locations
 
     @admin.display(description='Сумма')
     def price(self, obj):

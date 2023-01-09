@@ -8,7 +8,7 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth import views as auth_views
 
 
-from foodcartapp.models import Order, Product, Restaurant
+from foodcartapp.models import Order, Product, Restaurant, RestaurantMenuItem
 from restaurateur.utils.sort_funcs import sort_orders_by_status
 
 
@@ -93,18 +93,9 @@ def view_restaurants(request):
 
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
-    orders = sort_orders_by_status(Order.objects.with_price())
-
-    orders_with_restaurants_and_locations = []
-    for order in orders:
-        orders_with_restaurants_and_locations.append(
-            [
-                order,
-                order.get_available_restaurants_with_distance()
-            ]
-        )
+    orders_with_restaurants_and_locations = Order.get_orders_with_available_restaurants()
 
     return render(request, template_name='order_list.html', context={
-        'orders': orders_with_restaurants_and_locations,
+        'orders_and_restaurants': orders_with_restaurants_and_locations,
         'process_status': Order.PROCESS_STATUS,
     })

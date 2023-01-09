@@ -25,7 +25,7 @@
       <th>Комментарий</th>
       <th>Ссылка на админку</th>
     </tr>
-    {% for order, restaurants in orders %}
+    {% for order, restaurants in orders_and_restaurants %}
       <tr>
         <td>{{ order.id }}</td>
         <td>{{ order.get_status_display }}</td>
@@ -40,7 +40,11 @@
               <summary>Может быть приготовлен:</summary>
               <ul>
                 {% for restaurant, distance in restaurants %}
-                  <li>{{ restaurant.name }} - {{ distance }}</li>
+                  {% if distance %}
+                    <li>{{ restaurant.name }} - {{ distance }} км</li>
+                  {% else %}
+                    <li>{{ restaurant.name }} - ошибка определения координат</li>
+                  {% endif %}
                 {% endfor %}
               </ul>
             </details>

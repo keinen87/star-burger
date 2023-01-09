@@ -49,7 +49,7 @@ def register_order(request):
         address=serializer.validated_data['address'],
     )
 
-    if not order.get_available_restaurants(product_ids):
+    if not order.get_available_restaurants(uninitialized_product_ids=product_ids):
         return Response(
             {'message': 'Не найдены рестораны, способные обработать данный заказ.'},
             status=status.HTTP_422_UNPROCESSABLE_ENTITY,
