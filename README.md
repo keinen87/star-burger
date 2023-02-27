@@ -156,6 +156,7 @@ Parcel будет следить за файлами в каталоге `bundle
 - `YANDEX_KEY` — для работы сервиса необходимо [зарегистрироваться и получить ключ](https://yandex.ru/dev/maps/geocoder/)
 - `ROLLBAR_ACCESS_TOKEN` — для работы сервиса необходимо [зарегистрироваться и получить токен](https://rollbar.com/)
 - `ROLLBAR_ENVIRONMENT` — [документация Rollbar](https://docs.rollbar.com/docs/getting-started)
+- `DB_URL` — postgres://USER:PASSWORD@HOST:PORT/NAME
 
 ## Цели проекта
 
