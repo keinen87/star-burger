@@ -158,6 +158,14 @@ Parcel будет следить за файлами в каталоге `bundle
 - `ROLLBAR_ENVIRONMENT` — [документация Rollbar](https://docs.rollbar.com/docs/getting-started)
 - `DB_URL` — postgres://USER:PASSWORD@HOST:PORT/NAME
 
+## Деплой
+
+Для публикации последних изменений из корня репозитория выполните команду:
+
+```sh
+./deploy.sh
+```
+
 ## Цели проекта
 
 Код написан в учебных целях — это урок в курсе по Python и веб-разработке на сайте [Devman](https://dvmn.org). За основу был взят код проекта [FoodCart](https://github.com/Saibharath79/FoodCart).
